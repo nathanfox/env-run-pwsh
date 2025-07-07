@@ -18,8 +18,9 @@ $script:TestsRun = 0
 $script:TestsPassed = 0
 $script:TestsFailed = 0
 
-# Test configuration
-$script:TestDir = Join-Path $env:TEMP "setup-envs-test-$(Get-Date -Format 'yyyyMMdd-HHmmss')"
+# Test configuration - cross-platform temporary directory
+$TempBase = if ($IsWindows) { $env:TEMP } elseif ($env:TMPDIR) { $env:TMPDIR } else { "/tmp" }
+$script:TestDir = Join-Path $TempBase "setup-envs-test-$(Get-Date -Format 'yyyyMMdd-HHmmss')"
 
 # ANSI color codes for cross-platform compatibility
 $script:Colors = @{
@@ -213,7 +214,7 @@ function Test-FileContent {
 }
 
 function Test-ExistingFilesHandling {
-    Invoke-Test -TestName "Existing files handling" -ExpectedOutput "File already exists" -TestScript {
+    Invoke-Test -TestName "Existing files handling" -TestScript {
         # Set test environment
         $env:APPDATA = $script:TestDir
         $env:XDG_CONFIG_HOME = $script:TestDir
@@ -222,10 +223,22 @@ function Test-ExistingFilesHandling {
             # Create environment directory and a file
             $envDir = Join-Path $script:TestDir "env"
             New-Item -ItemType Directory -Path $envDir -Force | Out-Null
-            Set-Content -Path (Join-Path $envDir "base.env") -Value "EXISTING_VAR=test"
+            $baseEnvPath = Join-Path $envDir "base.env"
+            Set-Content -Path $baseEnvPath -Value "EXISTING_VAR=test"
+            
+            # Store original content
+            $originalContent = Get-Content $baseEnvPath -Raw
             
             # Run setup script
-            & "./setup-envs.ps1"
+            & "./setup-envs.ps1" | Out-Null
+            
+            # Verify file wasn't overwritten
+            $newContent = Get-Content $baseEnvPath -Raw
+            if ($originalContent -eq $newContent) {
+                Write-Output "Existing files preserved correctly"
+            } else {
+                Write-Error "Existing file was overwritten"
+            }
             
         } finally {
             Remove-Item env:APPDATA -ErrorAction SilentlyContinue
@@ -235,13 +248,29 @@ function Test-ExistingFilesHandling {
 }
 
 function Test-SecretToolDetection {
-    Invoke-Test -TestName "Secret tool detection" -ExpectedOutput "Checking for secret management tools" -TestScript {
+    Invoke-Test -TestName "Secret tool detection" -TestScript {
         # Set test environment
         $env:APPDATA = $script:TestDir
         $env:XDG_CONFIG_HOME = $script:TestDir
         
         try {
-            & "./setup-envs.ps1"
+            & "./setup-envs.ps1" | Out-Null
+            
+            # Check if at least one environment file contains secret management examples
+            $envDir = Join-Path $script:TestDir "env"
+            $devEnvPath = Join-Path $envDir "dev.env"
+            
+            if (Test-Path $devEnvPath) {
+                $content = Get-Content $devEnvPath -Raw
+                if ($content -like "*secret*" -or $content -like "*SECRET*") {
+                    Write-Output "Secret management examples found in environment files"
+                } else {
+                    Write-Error "No secret management examples found"
+                }
+            } else {
+                Write-Error "Environment files not created"
+            }
+            
         } finally {
             Remove-Item env:APPDATA -ErrorAction SilentlyContinue
             Remove-Item env:XDG_CONFIG_HOME -ErrorAction SilentlyContinue

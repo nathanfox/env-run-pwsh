@@ -18,8 +18,9 @@ $script:TestsRun = 0
 $script:TestsPassed = 0
 $script:TestsFailed = 0
 
-# Test configuration
-$script:TestDir = Join-Path $env:TEMP "env-run-test-$(Get-Date -Format 'yyyyMMdd-HHmmss')"
+# Test configuration - cross-platform temporary directory
+$TempBase = if ($IsWindows) { $env:TEMP } elseif ($env:TMPDIR) { $env:TMPDIR } else { "/tmp" }
+$script:TestDir = Join-Path $TempBase "env-run-test-$(Get-Date -Format 'yyyyMMdd-HHmmss')"
 $script:TestEnvDir = Join-Path $script:TestDir "env"
 
 # ANSI color codes for cross-platform compatibility
@@ -163,8 +164,21 @@ function Invoke-Test {
 
 # Test functions
 function Test-InvalidEnvironment {
-    Invoke-Test -TestName "Invalid environment" -ExpectFailure $true -ExpectedOutput "Environment file not found" -TestScript {
-        & "./env-run.ps1" "invalid" "echo" "test"
+    $script:TestsRun++
+    Write-Host "$($script:Colors.Yellow)Running test: Invalid environment$($script:Colors.Reset)"
+    
+    try {
+        & "./env-run.ps1" "invalid" "echo" "test" 2>&1 | Out-Null
+        Write-Host "$($script:Colors.Red)✗ FAIL: Invalid environment - Expected exception but command succeeded$($script:Colors.Reset)"
+        $script:TestsFailed++
+    } catch {
+        if ($_.Exception.Message -like "*Cannot validate argument on parameter 'Environment'*") {
+            Write-Host "$($script:Colors.Green)✓ PASS: Invalid environment$($script:Colors.Reset)"
+            $script:TestsPassed++
+        } else {
+            Write-Host "$($script:Colors.Red)✗ FAIL: Invalid environment - Wrong exception: $($_.Exception.Message)$($script:Colors.Reset)"
+            $script:TestsFailed++
+        }
     }
 }
 
@@ -217,7 +231,7 @@ function Test-SimpleCommand {
 }
 
 function Test-CommandWithArguments {
-    Invoke-Test -TestName "Command with multiple arguments" -ExpectedOutput "arg1 arg2 arg3" -TestScript {
+    Invoke-Test -TestName "Command with multiple arguments" -ExpectedOutput "arg1`narg2`narg3" -TestScript {
         & "./env-run.ps1" "dev" "Write-Output" "arg1" "arg2" "arg3"
     }
 }
