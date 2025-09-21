@@ -15,6 +15,8 @@ A lightweight PowerShell environment management utility for running commands wit
 - **Cross-platform compatibility**: Works on Windows, Linux, and macOS
 - **PowerShell 7+ support**: Designed for modern PowerShell Core
 
+> **Note**: This utility has been tested on Linux. Windows and macOS compatibility testing is pending.
+
 ## Installation
 
 1. Ensure you have PowerShell 7+ installed (`pwsh` command available)
