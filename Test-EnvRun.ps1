@@ -6,10 +6,11 @@
 
 .DESCRIPTION
     Comprehensive test suite for the env-run.ps1 script that validates:
-    - Error handling for invalid environments and missing commands
+    - Error handling for invalid environments
     - Environment variable loading and overrides
     - Export functionality
     - Command execution with environment variables
+    - Environment loading without commands
     - Cross-platform compatibility
 #>
 
@@ -183,7 +184,7 @@ function Test-InvalidEnvironment {
 }
 
 function Test-MissingCommand {
-    Invoke-Test -TestName "Missing command" -ExpectFailure $true -ExpectedOutput "No command specified" -TestScript {
+    Invoke-Test -TestName "No command (environment loading only)" -ExpectedOutput "Environment variables loaded for 'dev'" -TestScript {
         & "./env-run.ps1" "dev"
     }
 }

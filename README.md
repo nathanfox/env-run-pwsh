@@ -11,7 +11,7 @@ A lightweight PowerShell environment management utility for running commands wit
 - **Multi-environment support**: Separate configurations for dev, uat, and prod
 - **Layered configuration**: Base settings with environment-specific overrides
 - **Cross-platform secret management**: Integration with platform-specific secret stores
-- **Two usage modes**: Command execution and environment variable export
+- **Two usage modes**: Environment loading and command execution
 - **Cross-platform compatibility**: Works on Windows, Linux, and macOS
 - **PowerShell 7+ support**: Designed for modern PowerShell Core
 
@@ -19,10 +19,17 @@ A lightweight PowerShell environment management utility for running commands wit
 
 1. Ensure you have PowerShell 7+ installed (`pwsh` command available)
 2. Copy `env-run.ps1` to your desired location
-3. Make it executable on Unix systems: `chmod +x env-run.ps1`
-4. Run the setup script to create initial environment files: `./setup-envs.ps1`
+3. Run the setup script to create initial environment files: `./setup-envs.ps1`
 
 ## Usage
+
+### Environment Loading
+Load environment variables for the current session:
+```powershell
+./env-run.ps1 dev
+./env-run.ps1 prod
+./env-run.ps1 uat
+```
 
 ### Command Execution
 Run commands with environment-specific variables:
@@ -30,13 +37,6 @@ Run commands with environment-specific variables:
 ./env-run.ps1 dev npm start
 ./env-run.ps1 prod ./deploy.sh
 ./env-run.ps1 uat python manage.py migrate
-```
-
-### Environment Variable Export
-Load environment variables into your current PowerShell session:
-```powershell
-./env-run.ps1 dev --export | Invoke-Expression
-./env-run.ps1 prod --export | Invoke-Expression
 ```
 
 ## Configuration
@@ -129,7 +129,7 @@ Run the comprehensive test suites to verify functionality:
 ```
 
 The test scripts verify:
-- **env-run tests**: Error handling, environment loading, variable overrides, export functionality, command execution
+- **env-run tests**: Error handling, environment loading, variable overrides, command execution, environment loading without commands
 - **setup-envs tests**: Directory creation, file generation, content validation, cross-platform compatibility, secret tool detection
 
 ## Requirements
@@ -164,6 +164,9 @@ While maintaining the same core functionality, this PowerShell version includes:
 
 ### Basic Usage
 ```powershell
+# Load development environment
+./env-run.ps1 dev
+
 # Run a development server
 ./env-run.ps1 dev npm run dev
 
@@ -176,14 +179,14 @@ While maintaining the same core functionality, this PowerShell version includes:
 
 ### Advanced Usage
 ```powershell
-# Load environment into current session
-./env-run.ps1 dev --export | Invoke-Expression
-
-# Check what variables would be loaded
-./env-run.ps1 prod --export
-
 # Run PowerShell script with environment
 ./env-run.ps1 prod pwsh -File ./my-script.ps1
+
+# Load environment then run multiple commands
+./env-run.ps1 dev
+npm install
+npm run build
+npm test
 ```
 
 ## License

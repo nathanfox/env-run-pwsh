@@ -13,7 +13,7 @@
     The environment to use (dev, uat, prod)
 
 .PARAMETER Command
-    The command to execute (optional, use --export to output environment variables)
+    The command to execute (optional)
 
 .PARAMETER Arguments
     Arguments to pass to the command
@@ -24,7 +24,6 @@
 .EXAMPLE
     ./env-run.ps1 dev npm start
     ./env-run.ps1 prod ./deploy.sh
-    ./env-run.ps1 dev --export | Invoke-Expression
 
 .NOTES
     Environment files are stored in:
@@ -109,8 +108,7 @@ try {
     # Check if environment file exists
     if (-not (Test-Path $envFile)) {
         Write-Error "Environment file not found: $envFile"
-        Write-Host "Usage: ./env-run.ps1 <dev|uat|prod> <command> [args...]" -ForegroundColor Red
-        Write-Host "       ./env-run.ps1 <dev|uat|prod> --export" -ForegroundColor Red
+        Write-Host "Usage: ./env-run.ps1 <dev|uat|prod> [command] [args...]" -ForegroundColor Red
         exit 1
     }
     
@@ -134,16 +132,14 @@ try {
         exit 0
     }
     
-    # Check if command is provided
-    if ([string]::IsNullOrEmpty($Command)) {
-        Write-Error "No command specified"
-        Write-Host "Usage: ./env-run.ps1 <dev|uat|prod> <command> [args...]" -ForegroundColor Red
-        Write-Host "       ./env-run.ps1 <dev|uat|prod> --export" -ForegroundColor Red
-        exit 1
-    }
-    
     # Set environment variables
     Set-EnvironmentVariables $allVars
+    
+    # If no command is provided, just set the environment and exit
+    if ([string]::IsNullOrEmpty($Command)) {
+        Write-Output "Environment variables loaded for '$Environment'"
+        exit 0
+    }
     
     # Execute the command
     if ($Arguments) {

@@ -80,8 +80,7 @@ function New-EnvFile {
     )
     
     if (Test-Path $FilePath) {
-        Write-Host "File already exists: $FilePath" -ForegroundColor Yellow
-        return
+        Write-Host "File already exists, overwriting: $FilePath" -ForegroundColor Yellow
     }
     
     try {
@@ -204,7 +203,6 @@ DATABASE_URL=postgres://user:pass@prod-db:5432/myapp_prod
     Write-Host "Usage examples:" -ForegroundColor Cyan
     Write-Host "  ./env-run.ps1 dev npm start" -ForegroundColor Gray
     Write-Host "  ./env-run.ps1 prod ./deploy.sh" -ForegroundColor Gray
-    Write-Host "  ./env-run.ps1 dev --export | Invoke-Expression" -ForegroundColor Gray
     Write-Host ""
     Write-Host "Configuration files created in: $configDir" -ForegroundColor Gray
     Write-Host "Edit these files to match your application's requirements." -ForegroundColor Gray
